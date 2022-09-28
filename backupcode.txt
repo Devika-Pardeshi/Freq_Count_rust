@@ -1,0 +1,111 @@
+use std::collections::HashMap;
+use std::fs;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+
+extern crate unicode_segmentation;
+
+use unicode_segmentation::UnicodeSegmentation;
+
+fn main() {
+    //get_freq_count("/workspace/Sample/Marathi/marathi1.utf-8".to_string());
+    //iterate_files("/workspace/Sample".to_string());
+    iterate_folder("/workspace/Sample".to_string());
+    // let result = iterate_files("/workspace/Sample".to_string());
+    // println!("Result is {:?}", result);
+}
+
+fn get_freq_count(file_path: String) -> HashMap<String, u32> {
+    let mut frequency: HashMap<String, u32> = HashMap::new();
+
+    let f = BufReader::new(File::open(file_path).expect("open failed"));
+    for line in f.lines() {
+        let line_str = line.unwrap();
+        let g = UnicodeSegmentation::graphemes(line_str.as_str(), true).collect::<Vec<&str>>();
+        for s in g {
+            *frequency.entry(s.to_owned()).or_insert(0) += 1;
+        }
+    }
+    // println!("{:?}", frequency);
+    return frequency;
+}
+
+fn iterate_files(dir_path: String) -> HashMap<String, u32> {
+    let mut folder_frequency: HashMap<String, u32> = HashMap::new();
+    for file in fs::read_dir(dir_path).unwrap() {
+        let s = format!("{}", file.as_ref().unwrap().path().display());
+        let m = file.as_ref().unwrap().metadata().unwrap();
+
+        if m.is_file() {
+            // println!("{}", s);
+            let fc = get_freq_count(s);
+            // println!("get_freq_count {:?}", fc);
+            for (key, value) in fc {
+                *folder_frequency.entry(key.to_owned()).or_insert(0) += value;
+            }
+        } else {
+            let fc = iterate_files(s);
+            for (key, value) in fc {
+                *folder_frequency.entry(key.to_owned()).or_insert(0) += value;
+            }
+        }
+    }
+    return folder_frequency;
+}
+
+fn iterate_folder(dir_path: String){
+    let mut folder_language = HashMap::new();
+    folder_language.insert("/workspace/Sample/Marathi".to_string(), "/workspace/Sample/Marathi".to_string());
+
+    match folder_language.get( & "/workspace/Sample/Marathi".to_string()) {
+        Some(value) => {
+          for file in fs::read_dir(dir_path).unwrap() {
+            let s = format!("{}", file.as_ref().unwrap().path().display());
+            let m = file.as_ref().unwrap().metadata().unwrap();
+                if value.contains(&s) {
+                   if m.is_dir() 
+                   {
+                      println!("{}", s);
+                      let fc = iterate_files(s);
+                      println!("{:?}",fc);
+                   }
+                }else{
+                   println!("folder not found")
+                }
+            }
+        }
+        None => {
+            println!("nothing found");
+        }
+    }
+}
+
+
+fn iterate_folder(dir_path: String){
+    let dir_languages = language_lookup :: language_data();
+
+        for file in fs::read_dir(dir_path).unwrap() {
+         let file_ph = format!("{}", file.as_ref().unwrap().path().display());
+         let file_nm = format!("{}", file.as_ref().unwrap().file_name().to_str().unwrap());
+          //  let file_nm = file_name(&file.unwrap().file_name()).unwrap().to_string();
+            let m = file.as_ref().unwrap().metadata().unwrap();
+                //  if dir_languages.contains_key(&s) {
+                   if m.is_dir()
+                    {
+                       // for i in dir_languages.keys(){
+                        //  if dir_languages.contains_key(&file_nm) {
+                         //  if i.contains(&s){
+                            if dir_languages.contains_key(&file_nm) {
+                           println!("{}", file_nm);
+                           let fc = iterate_files(file_ph);
+                           println!("{:?}",fc);
+                    }else{
+                        println!("folder not found")
+                    }
+                 // }
+                }
+                // }else{
+                //     println!("folder not found")
+                // }
+        }
+}
